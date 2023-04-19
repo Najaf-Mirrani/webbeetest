@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MenuItem } from './entities/menu-item.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { groupBy } from 'rxjs';
 
 @Injectable()
 export class MenuItemsService {
@@ -86,6 +87,14 @@ export class MenuItemsService {
     ]
   */
   async getMenuItems() {
-    throw new Error('TODO in task 3');
+    const menuItems = await this.menuItemRepository.find();
+
+    function getChildItems(parentId: any): MenuItem[] {
+      return menuItems
+        .filter((item) => item.parentId === parentId)
+        .map((item) => ({ ...item, children: getChildItems(item.id) }));
+    }
+
+    return getChildItems(null);
   }
 }

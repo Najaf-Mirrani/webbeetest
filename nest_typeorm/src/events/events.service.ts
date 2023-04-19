@@ -1,4 +1,4 @@
-import { Not, Repository, SelectQueryBuilder } from 'typeorm';
+import { In, Not, Repository, SelectQueryBuilder } from 'typeorm';
 import { Get, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from './entities/event.entity';
@@ -175,6 +175,22 @@ export class EventsService {
      */
   @Get('futureevents')
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    const currentDateTime = new Date();
+    const events = await this.eventRepository
+      .createQueryBuilder('event')
+      .where('workshop.start > :currentDateTime', { currentDateTime })
+      .andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('MIN(workshop.start)', 'minWorkshopStartTime')
+          .from('workshop', 'workshop')
+          .where('workshop.eventId = event.id')
+          .getQuery();
+        return 'workshop.start = ' + subQuery;
+      })
+      .getMany();
+    return events;
+    // return events;
+    // throw new Error('TODO task 2');
   }
 }
